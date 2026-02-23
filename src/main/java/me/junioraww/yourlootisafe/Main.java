@@ -44,7 +44,10 @@ public final class Main extends JavaPlugin implements Listener {
     Player player = event.getEntity();
     Location loc = player.getLocation();
 
-    if (loc.getY() < loc.getWorld().getMinHeight()) return;
+    if (loc.getY() < loc.getWorld().getMinHeight()) {
+      event.setKeepInventory(true);
+      return;
+    }
 
     List<ItemStack> drops = new ArrayList<>(event.getDrops());
     event.getDrops().clear();
