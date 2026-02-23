@@ -52,6 +52,34 @@ public final class Main extends JavaPlugin implements Listener {
     List<ItemStack> drops = new ArrayList<>(event.getDrops());
     event.getDrops().clear();
 
+    java.util.Iterator<ItemStack> iterator = drops.iterator();
+    while (iterator.hasNext()) {
+      ItemStack item = iterator.next();
+      if (item.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable damageable) {
+        int maxDurability;
+
+        if (damageable.hasMaxDamage()) maxDurability = damageable.getMaxDamage();
+        else if (item.getType().getMaxDurability() != 0) maxDurability = item.getType().getMaxDurability();
+        else maxDurability = damageable.getDamage();
+
+        Bukkit.getLogger().info("dura " + maxDurability + " " + damageable.hasMaxDamage());
+
+        if (maxDurability > 0) {
+          int damageToAdd = maxDurability / (java.util.concurrent.ThreadLocalRandom.current().nextBoolean() ? 3 : 4);
+          int finalDamage = damageable.getDamage() + damageToAdd;
+
+          if (finalDamage >= maxDurability) {
+            iterator.remove();
+          } else {
+            damageable.setDamage(finalDamage);
+            item.setItemMeta(damageable);
+          }
+        }
+      }
+    }
+    
+    drops.remove(java.util.concurrent.ThreadLocalRandom.current().nextInt(drops.size()));
+
     Mannequin mannequin = (Mannequin) loc.getWorld().spawnEntity(loc, EntityType.MANNEQUIN);
 
     mannequin.setPose(Pose.SWIMMING);
@@ -76,8 +104,17 @@ public final class Main extends JavaPlugin implements Listener {
     mannequin.setDescription(description);
     mannequin.setGlowing(true);
 
-    mannequin.getEquipment().setArmorContents(player.getEquipment().getArmorContents());
-    mannequin.getEquipment().setItemInMainHand(player.getEquipment().getItemInMainHand());
+    org.bukkit.inventory.EntityEquipment mInv = mannequin.getEquipment();
+    mInv.clear();
+
+    for (ItemStack item : drops) {
+      String materialName = item.getType().name();
+      if (materialName.endsWith("_HELMET") && mInv.getHelmet() == null) mInv.setHelmet(item);
+      else if (materialName.endsWith("_CHESTPLATE") && mInv.getChestplate() == null) mInv.setChestplate(item);
+      else if (materialName.endsWith("_LEGGINGS") && mInv.getLeggings() == null) mInv.setLeggings(item);
+      else if (materialName.endsWith("_BOOTS") && mInv.getBoots() == null) mInv.setBoots(item);
+      else if (mInv.getItemInMainHand().getType().isAir()) mInv.setItemInMainHand(item);
+    }
 
     String serialized = itemsToBase64(drops);
     mannequin.getPersistentDataContainer().set(lootKey, PersistentDataType.STRING, serialized);
