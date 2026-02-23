@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Pose;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
@@ -35,6 +36,19 @@ public final class Main extends JavaPlugin implements Listener {
   public void onEnable() {
     this.lootKey = new NamespacedKey(this, "stored_inventory");
     getServer().getPluginManager().registerEvents(this, this);
+
+    Bukkit.getScheduler().runTaskTimer(this, () -> {
+      for (org.bukkit.World world : Bukkit.getWorlds()) {
+        for (Mannequin mannequin : world.getEntitiesByClass(Mannequin.class)) {
+          if (mannequin.getPersistentDataContainer().has(lootKey, PersistentDataType.STRING)) {
+
+            if (mannequin.getLocation().add(0, 0.5, 0).getBlock().isLiquid()) {
+              mannequin.setVelocity(mannequin.getVelocity().setY(0.1));
+            }
+          }
+        }
+      }
+    }, 0L, 2L);
   }
 
   @EventHandler
@@ -77,13 +91,17 @@ public final class Main extends JavaPlugin implements Listener {
         }
       }
     }
-    
+
     drops.remove(java.util.concurrent.ThreadLocalRandom.current().nextInt(drops.size()));
 
     Mannequin mannequin = (Mannequin) loc.getWorld().spawnEntity(loc, EntityType.MANNEQUIN);
 
     mannequin.setPose(Pose.SWIMMING);
     mannequin.setAI(false);
+
+    mannequin.setGravity(true);
+    mannequin.setRemoveWhenFarAway(false);
+    mannequin.setPersistent(true);
 
     Attribute health = Attribute.MAX_HEALTH;
     mannequin.registerAttribute(health);
@@ -118,6 +136,30 @@ public final class Main extends JavaPlugin implements Listener {
 
     String serialized = itemsToBase64(drops);
     mannequin.getPersistentDataContainer().set(lootKey, PersistentDataType.STRING, serialized);
+  }
+
+  @EventHandler
+  public void onMannequinDamage(EntityDamageEvent event) {
+    if (!(event.getEntity() instanceof Mannequin mannequin)) return;
+
+    if (!mannequin.getPersistentDataContainer().has(lootKey, PersistentDataType.STRING)) return;
+
+    if (event instanceof org.bukkit.event.entity.EntityDamageByEntityEvent entityEvent) {
+      if (entityEvent.getDamager() instanceof Player) {
+        return;
+      }
+    }
+
+    event.setCancelled(true);
+  }
+
+  @EventHandler
+  public void onMannequinCombust(org.bukkit.event.entity.EntityCombustEvent event) {
+    if (event.getEntity() instanceof Mannequin mannequin) {
+      if (mannequin.getPersistentDataContainer().has(lootKey, PersistentDataType.STRING)) {
+        event.setCancelled(true);
+      }
+    }
   }
 
   @EventHandler
