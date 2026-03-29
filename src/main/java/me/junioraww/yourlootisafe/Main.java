@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EntityType;
@@ -17,6 +18,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.io.BukkitObjectInputStream;
@@ -60,13 +62,32 @@ public final class Main extends JavaPlugin implements Listener {
 
     if (loc.getY() < loc.getWorld().getMinHeight()) {
       event.setKeepInventory(true);
+      /*Bukkit.getScheduler().runTaskLater(this, task -> {
+        PlayerInventory inv = player.getInventory();
+        ItemStack[] contents = inv.getContents();
+
+        List<Integer> filledSlots = new ArrayList<>();
+
+        for (int i = 0; i < contents.length; i++) {
+          if (contents[i] != null && contents[i].getType() != Material.AIR) {
+            filledSlots.add(i);
+          }
+        }
+
+        if (!filledSlots.isEmpty()) {
+          int randomSlot = filledSlots.get(
+              ThreadLocalRandom.current().nextInt(filledSlots.size())
+          );
+          inv.setItem(randomSlot, null);
+        }
+      }, 1L);*/
       return;
     }
 
     List<ItemStack> drops = new ArrayList<>(event.getDrops());
     event.getDrops().clear();
 
-    java.util.Iterator<ItemStack> iterator = drops.iterator();
+    /*java.util.Iterator<ItemStack> iterator = drops.iterator();
     while (iterator.hasNext()) {
       ItemStack item = iterator.next();
       if (item.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable damageable) {
@@ -76,10 +97,8 @@ public final class Main extends JavaPlugin implements Listener {
         else if (item.getType().getMaxDurability() != 0) maxDurability = item.getType().getMaxDurability();
         else maxDurability = damageable.getDamage();
 
-        Bukkit.getLogger().info("dura " + maxDurability + " " + damageable.hasMaxDamage());
-
         if (maxDurability > 0) {
-          int damageToAdd = maxDurability / (java.util.concurrent.ThreadLocalRandom.current().nextBoolean() ? 3 : 4);
+          int damageToAdd = maxDurability / (java.util.concurrent.ThreadLocalRandom.current().nextBoolean() ? 6 : 7);
           int finalDamage = damageable.getDamage() + damageToAdd;
 
           if (finalDamage >= maxDurability) {
@@ -90,9 +109,9 @@ public final class Main extends JavaPlugin implements Listener {
           }
         }
       }
-    }
+    }*/
 
-    drops.remove(java.util.concurrent.ThreadLocalRandom.current().nextInt(drops.size()));
+    //drops.remove(java.util.concurrent.ThreadLocalRandom.current().nextInt(drops.size()));
 
     Mannequin mannequin = (Mannequin) loc.getWorld().spawnEntity(loc, EntityType.MANNEQUIN);
 
